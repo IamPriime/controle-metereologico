@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Registre o nome e as coordenadas de um local para a coleta de dados meteorológicos.">
+  <meta name="referrer" content="no-referrer">
+  <title>Coleta de dados meteorológicos</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, sans-serif;
+      --background: #0d1821;
+      --panel: #14232e;
+      --input: #101e28;
+      --line: #405666;
+      --text: #f1f7fa;
+      --muted: #aebfca;
+      --accent: #9fecd3;
+      --error: #ffc0b9;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: radial-gradient(ellipse at 50% 0, #19373b, transparent 36rem), var(--background);
+    }
+
+    main {
+      width: min(100% - 2rem, 40rem);
+      margin-inline: auto;
+      padding-block: clamp(2.5rem, 8vw, 5.5rem) 2.5rem;
+    }
+
+    header { margin-bottom: 1.8rem; }
+
+    .marker {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      aspect-ratio: 1;
+      margin-bottom: 1.15rem;
+      border: 1px solid #427369;
+      border-radius: .85rem;
+      background: #21423e;
+      color: var(--accent);
+    }
+
+    .marker::before {
+      content: "";
+      width: 1.15rem;
+      aspect-ratio: 1;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      background: radial-gradient(circle, currentColor 0 2px, transparent 3px);
+    }
+
+    h1 {
+      max-width: 15ch;
+      margin: 0 0 .75rem;
+      font-size: clamp(2rem, 7vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -.045em;
+    }
+
+    p { margin: 0; line-height: 1.55; }
+    header p, .hint, .status, footer { color: var(--muted); }
+
+    form {
+      display: grid;
+      gap: 1.5rem;
+      padding: clamp(1rem, 4vw, 2rem);
+      border: 1px solid #314755;
+      border-radius: 1.25rem;
+      background: var(--panel);
+      box-shadow: 0 1.25rem 3rem #0003;
+    }
+
+    label {
+      display: block;
+      margin-bottom: .45rem;
+      font-size: .93rem;
+      font-weight: 650;
+    }
+
+    input, button {
+      width: 100%;
+      min-height: 3rem;
+      padding: .65rem .85rem;
+      border: 1px solid var(--line);
+      border-radius: .65rem;
+      font: inherit;
+    }
+
+    input { color: var(--text); background: var(--input); }
+    input::placeholder { color: #91a5b2; opacity: 1; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+    legend { padding: 0; font-weight: 700; }
+    .hint { margin-block: .3rem .85rem; font-size: .875rem; }
+
+    .coordinates {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .85rem;
+    }
+
+    button { cursor: pointer; font-weight: 700; }
+    button[hidden] { display: none; }
+
+    .locate {
+      margin-top: .85rem;
+      color: var(--accent);
+      background: transparent;
+    }
+
+    .locate:hover:not([aria-disabled="true"]) { background: #223742; }
+    .locate[aria-disabled="true"] { cursor: wait; }
+
+    .status { font-size: .875rem; }
+    .status:not(:empty) { margin-top: .55rem; }
+    .status[data-error] { color: var(--error); }
+
+    .submit { background: var(--accent); border-color: transparent; color: #10251f; }
+    .submit:hover { background: #bff7e5; }
+
+    footer { padding-top: 1rem; text-align: center; font-size: .85rem; }
+    footer a { color: inherit; text-underline-offset: .2em; }
+
+    @media (max-width: 360px) {
+      .coordinates { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="marker" aria-hidden="true"></span>
+      <h1>Coleta de dados meteorológicos</h1>
+      <p>Registre o nome e as coordenadas do local da coleta.</p>
+    </header>
+
+    <form id="registro" method="post"
+      action="https://docs.google.com/forms/d/e/1FAIpQLSc3iLwDnHCEdBFJa9hoQqZekbrWh8kkZlP_4N0cPkEUgaNa2w/formResponse">
+      <div>
+        <label for="local">Nome do local</label>
+        <input id="local" name="entry.426002888" placeholder="Ex.: Estação Central" required>
+      </div>
+
+      <fieldset>
+        <legend>Coordenadas</legend>
+        <p class="hint" id="coordinate-hint">Informe em graus decimais, com vírgula ou ponto.</p>
+        <div class="coordinates">
+          <div>
+            <label for="latitude">Latitude</label>
+            <input id="latitude" name="entry.1760901326" placeholder="-23,550520"
+              inputmode="text" spellcheck="false" aria-describedby="coordinate-hint" required>
+          </div>
+          <div>
+            <label for="longitude">Longitude</label>
+            <input id="longitude" name="entry.384178347" placeholder="-46,633308"
+              inputmode="text" spellcheck="false" aria-describedby="coordinate-hint" required>
+          </div>
+        </div>
+        <button class="locate" id="locate" type="button" aria-describedby="location-status" hidden>
+          Usar minha localização
+        </button>
+        <p class="status" id="location-status" role="status"></p>
+      </fieldset>
+
+      <button class="submit" type="submit">Enviar registro</button>
+    </form>
+
+    <footer>
+      O envio é feito pelo
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSc3iLwDnHCEdBFJa9hoQqZekbrWh8kkZlP_4N0cPkEUgaNa2w/viewform">Google Forms</a>.
+    </footer>
+  </main>
+
+  <script>
+    const form = document.querySelector('#registro');
+    const place = document.querySelector('#local');
+    const latitude = document.querySelector('#latitude');
+    const longitude = document.querySelector('#longitude');
+    const locate = document.querySelector('#locate');
+    const status = document.querySelector('#location-status');
+    const coordinates = [
+      { input: latitude, label: 'Latitude', limit: 90 },
+      { input: longitude, label: 'Longitude', limit: 180 }
+    ];
+
+    for (const input of [place, latitude, longitude]) {
+      input.addEventListener('input', () => input.setCustomValidity(''));
+    }
+
+    function validateCoordinate({ input, label, limit }) {
+      const normalized = input.value.trim().replace(',', '.');
+      const isDecimal = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(normalized);
+      const isValid = isDecimal && Math.abs(Number(normalized)) <= limit;
+      input.setCustomValidity(
+        isValid ? '' : `${label} deve estar entre -${limit} e ${limit} graus.`
+      );
+      return normalized;
+    }
+
+    form.addEventListener('submit', (event) => {
+      const name = place.value.trim();
+      place.setCustomValidity(name ? '' : 'Informe o nome do local.');
+      const normalized = coordinates.map(validateCoordinate);
+
+      if (!form.reportValidity()) {
+        event.preventDefault();
+        return;
+      }
+
+      place.value = name;
+      coordinates.forEach(({ input }, index) => { input.value = normalized[index]; });
+      // A navegação para o Google permite que ele exiba o resultado do envio.
+    });
+
+    function showLocationStatus(message, isError = false) {
+      status.textContent = message;
+      status.toggleAttribute('data-error', isError);
+    }
+
+    if (window.isSecureContext && navigator.geolocation) {
+      locate.hidden = false;
+      locate.addEventListener('click', () => {
+        if (locate.getAttribute('aria-disabled') === 'true') return;
+
+        const previousValues = [latitude.value, longitude.value];
+        locate.setAttribute('aria-disabled', 'true');
+        showLocationStatus('Buscando sua localização…');
+
+        navigator.geolocation.getCurrentPosition(
+          ({ coords }) => {
+            locate.removeAttribute('aria-disabled');
+            if (coordinates.some(({ input }, index) => input.value !== previousValues[index])) {
+              showLocationStatus('Sua edição foi preservada. Use o botão novamente para atualizar as coordenadas.');
+              return;
+            }
+
+            latitude.value = coords.latitude.toFixed(6);
+            longitude.value = coords.longitude.toFixed(6);
+            latitude.setCustomValidity('');
+            longitude.setCustomValidity('');
+            showLocationStatus('Coordenadas preenchidas. Confira os valores antes de enviar.');
+          },
+          ({ code }) => {
+            locate.removeAttribute('aria-disabled');
+            const message = code === 1
+              ? 'A localização está bloqueada. Você pode digitar as coordenadas.'
+              : 'Não foi possível obter a localização. Tente novamente ou digite as coordenadas.';
+            showLocationStatus(message, true);
+          },
+          { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+        );
+      });
+    }
+  </script>
+</body>
+</html>
